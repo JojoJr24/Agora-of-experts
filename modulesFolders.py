@@ -1,0 +1,5 @@
+EXPERTS_DIR = "./ControllerExperts/experts/"
+MODULES_DIR = "./ControllerChains/prompt_chains"
+TOOLS_DIR = "./ControllerTools/tools"
+CHATS_DIR = "./ControllerChat/chats"
+CHROMA_DIR = "./ControllerRAG/db"

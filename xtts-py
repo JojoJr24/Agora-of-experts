@@ -1,0 +1,12 @@
+from TTS.api import TTS
+tts = TTS("tts_models/multilingual/multi-dataset/xtts_v2")
+tts.to("cuda")
+
+# generate speech by cloning a voice using default settings
+tts.tts_to_file(text="""Esto es una prueba generada con X T T S. Lo interesante de este modelo es que puede generar audios largos que pueden usarse en un video, en una presentación, o en un discurso sin problemas.
+                Es muy rápido, este audio lo generó en 10 segundos. Y lo mejor es que es gratis""",
+                file_path="output.wav",
+                speaker="Ana Florence",
+                language="es",
+                split_sentences=True
+                )

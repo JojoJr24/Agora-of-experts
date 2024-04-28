@@ -1,0 +1,8 @@
+gradio
+ollama 
+openai
+extensions
+chromadb
+langchain-text-splitters
+wikipedia
+duckduckgo-search
