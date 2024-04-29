@@ -16,6 +16,7 @@
     border: 2 !important;
     flex: 1;
     min-height: auto ;
+    max-height: 85vh;
 
 }
 
