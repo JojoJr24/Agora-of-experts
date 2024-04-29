@@ -20,96 +20,66 @@ def add_message(history, message, expert_selected, model):
         history.append((message["text"], None))
     return history, gr.MultimodalTextbox(value=None, interactive=False), modelName
 
-def sendToBot(history,
-              expert_selected,
-              tps_text,
-              use_agent_checkbox, 
-              modulo_dropdown,
-              stream_checkbox,
-              model_dropdown,
-              tools_agent_checkbox,
-              tools_dropdown,
-              collection_agent_checkbox,
-              collections_dropdown):
+def send_to_bot(history, expert_selected, tps_text, use_agent_checkbox, 
+                modulo_dropdown, stream_checkbox, model_dropdown, 
+                tools_agent_checkbox, tools_dropdown, collection_agent_checkbox, 
+                collections_dropdown):
 
-    #modelo getLlmData().
+    # Procesar el agente de módulos
     if use_agent_checkbox and modulo_dropdown in MODULOS:
-        response = MODULOS[modulo_dropdown](expert_selected,history, model_dropdown)
-        if not history or len(history[-1]) < 2 or history[-1][1] is None:
-            if len(history[-1]) < 2:
-                history[-1].append("")  # Add an empty string if the second element is missing
-            else:
-                history[-1][1] = ""  # Initialize the second element with an empty string if it's None
-        history[-1][1] += response 
-        yield history , "-1WPS"
-        return
-    
-    if tools_agent_checkbox and len(tools_dropdown) > 0:
-        response = tool_bot(expert_selected,history,tools_dropdown,model_dropdown)
-        if not history or len(history[-1]) < 2 or history[-1][1] is None:
-            if len(history[-1]) < 2:
-                history[-1].append("")  # Add an empty string if the second element is missing
-            else:
-                history[-1][1] = ""  # Initialize the second element with an empty string if it's None
-        history[-1][1] += response
-        yield history , "-1WPS"
-        return
-
-    if collection_agent_checkbox and collections_dropdown != '' :
-        response = generateResponse(expert_selected,history[-1][0],model_dropdown,collections_dropdown)
-        if not history or len(history[-1]) < 2 or history[-1][1] is None:
-            if len(history[-1]) < 2:
-                history[-1].append("")  # Add an empty string if the second element is missing
-            else:
-                history[-1][1] = ""  # Initialize the second element with an empty string if it's None
-        history[-1][1] += response 
+        response = MODULOS[modulo_dropdown](expert_selected, history, model_dropdown)
+        update_history(history,response)
         yield history, "-1WPS"
         return
-    #Si no es una ejecución especial entonces es normal
-    if stream_checkbox:
-        yield from botStream(expert_selected,history, model_dropdown)
-    else:
-        yield from bot(expert_selected,history, model_dropdown)
     
+    # Procesar el agente de herramientas
+    if tools_agent_checkbox and tools_dropdown:
+        response = tool_bot(expert_selected, history, tools_dropdown, model_dropdown)
+        update_history(history,response)
+        yield history, "-1WPS"
+        return
 
-def bot(expert_selected,history, model_dropdown):
+    # Procesar el agente de colecciones
+    if collection_agent_checkbox and collections_dropdown:
+        response = generateResponse(expert_selected, history[-1][0], model_dropdown, collections_dropdown)
+        update_history(history,response)
+        yield history, "-1WPS"
+        return
+
+    # Llamar a un experto si ninguna de las otras condiciones se cumple
+    yield from call_expert(expert_selected, history, model_dropdown, stream_checkbox)
+
+
+
+def call_expert(expert_selected, history, model_dropdown, stream=False):
     start_time = time.perf_counter_ns()
-    messages = []
     messages = createMessages(history)
-    response = llm_call(expert_selected,model_dropdown,messages)
-    # Check if the last item in history has less than 2 elements, or the second element is None
+    
+    if stream:
+        responses = llm_call(expert_selected, model_dropdown, messages, stream=True)
+        token_counter = 0
+        for chunk in responses:
+            token_counter += 1
+            update_history(history, chunk['message']['content'])
+            yield history, ""
+        end_time = time.perf_counter_ns()
+        tps = f'{int(token_counter / ((end_time - start_time) / 1e9))}TPS'
+        yield history, tps
+    else:
+        response = llm_call(expert_selected, model_dropdown, messages)
+        update_history(history, response)
+        end_time = time.perf_counter_ns()
+        tps = f'{int(len(response.split()) / ((end_time - start_time) / 1e9))}WPS'
+        yield history, tps
+
+def update_history(history, content):
     if not history or len(history[-1]) < 2 or history[-1][1] is None:
         if len(history[-1]) < 2:
             history[-1].append("")  # Add an empty string if the second element is missing
         else:
             history[-1][1] = ""  # Initialize the second element with an empty string if it's None
+    history[-1][1] += content    
 
-    # Append the new assistant response to the last item in history
-    history[-1][1] += response
-    end_time = time.perf_counter_ns()
-    tps = ''+ str(int(len(response.split()) / ((end_time - start_time)/ 1e9))) + 'WPS'
-    yield history ,tps
-
-def botStream(expert_selected,history, model_dropdown):
-    messages = []
-    messages = createMessages(history)
-    responses = llm_call(expert_selected,model_dropdown,messages, stream=True)
-    start_time = time.perf_counter_ns() 
-    token_counter = 0
-    for chunk in responses:
-        token_counter += 1
-        # Check if the last item in history has less than 2 elements, or the second element is None
-        if not history or len(history[-1]) < 2 or history[-1][1] is None:
-            if len(history[-1]) < 2:
-                history[-1].append("")  # Add an empty string if the second element is missing
-            else:
-                history[-1][1] = ""  # Initialize the second element with an empty string if it's None
-        history[-1][1] += chunk['message']['content']
-        yield history ,"" 
-
-    end_time = time.perf_counter_ns()
-    tps = ''+ str(int(token_counter / ((end_time - start_time)/ 1e9))) + 'TPS'
-    yield history ,tps
 
 def resendLast(history,
                expert_selected,
@@ -124,7 +94,7 @@ def resendLast(history,
                collections_dropdown):
     if history:
         history[-1][1] = None
-        yield from sendToBot(history,
+        yield from send_to_bot(history,
                         expert_selected,
                         tps_text,
                         use_agent_checkbox,

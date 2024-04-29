@@ -1,12 +1,12 @@
 # archivo_chat.py
 import gradio as gr
 # Crea el componente Chatbot
-from ControllerChat.chat_logic import add_message, delete_conversation, editLast, get_conversation_list, load_conversation, print_like_dislike, removeLast, resendLast, save_conversation, sendToBot
+from ControllerChat.chat_logic import add_message, delete_conversation, editLast, get_conversation_list, load_conversation, print_like_dislike, removeLast, resendLast, save_conversation, send_to_bot
 from ControllerLLM.llm_manager import MODEL_SIZE_ITEMS
-from ControllerChains.modulos_logic import  NOMBRES_MODULOS, cargar_funciones
+from ControllerChains.modulos_logic import  NOMBRES_MODULOS
 from ControllerRAG.rag_logic import update_collections_list
 from ControllerExperts.experts_logic import  DEFAULT_EXPERT, getAllExperts, loadLLMData
-from ControllerTools.tools_logic import NOMBRES_TOOLS, cargar_tools
+from ControllerTools.tools_logic import NOMBRES_TOOLS
 
 chatbot = gr.Chatbot(
     elem_id="chatbot",
@@ -91,7 +91,7 @@ def chat_tab():
                 # Procesa los mensajes de usuario y actualiza el chatbot
                 chat_msg = chat_input.submit(add_message, [chatbot, chat_input ,experts_dropdown, model_dropdown], [chatbot, chat_input, model_name])
                 # Inicia la respuesta del bot tras recibir un mensaje
-                bot_msg = chat_msg.then(sendToBot, [chatbot, 
+                bot_msg = chat_msg.then(send_to_bot, [chatbot, 
                                                     experts_dropdown,
                                                     tps_text,
                                                     use_agent_checkbox, 
