@@ -2,8 +2,9 @@ from dataclasses import asdict
 import subprocess
 import os
 import gradio as gr
-from openai import OpenAI
-from ControllerExperts.experts_logic import getLlmData
+import ollama
+
+from ControllerExperts.experts_logic import ModelConfig, getLlmData
 from modulesFolders import CHATS_DIR
 from utils import read_json_file
 from enum import Enum
@@ -16,14 +17,30 @@ class ModelSize(Enum):
 
 MODEL_SIZE_ITEMS = [model.value for model in ModelSize]
 
+def model_config_to_json(config: ModelConfig):
+    json_output = {
+        "messages": config['messages'],
+        "model": config['model'],
+        "stream": config['stream'],
+        "options": {
+            "seed": config['seed'],
+            "temperature": config['temperature'],
+            "presence_penalty": config['presence_penalty'],
+            "frequency_penalty": config['frequency_penalty'],
+            "top_p": config['top_p']
+        }
+    }
+        # Omitir claves nulas en las opciones
+    json_output['options'] = {k: v for k, v in json_output['options'].items() if v is not None}
+    
+    # Omitir claves nulas en el JSON principal
+    return {k: v for k, v in json_output.items() if v is not None}
+
 
 if not os.path.exists(CHATS_DIR):
     os.makedirs(CHATS_DIR)
 
-client = OpenAI(
-    base_url = 'http://localhost:11434/v1',
-    api_key='ollama', # required, but unused
-)
+client = ollama.Client()
 
 def zero_shot_for_agents(expert_selected,model_choice: ModelSize, prompt , system_message = ''):
     LLM_DATA = getLlmData(expert_selected)
@@ -46,7 +63,7 @@ def zero_shot_for_agents(expert_selected,model_choice: ModelSize, prompt , syste
         raise TypeError("The 'prompt' argument must be either a string or a list of message dictionaries.")
     request_params['messages'] = message
     # Call the create method with the parameters from the ModelConfig
-    response = client.chat.completions.create(**request_params).choices[0].message.content
+    response = client.chat(**model_config_to_json(request_params))['message']['content']
     return response
 
 def zero_shot(expert_selected,model_choice: ModelSize, messages):
@@ -60,7 +77,8 @@ def zero_shot(expert_selected,model_choice: ModelSize, messages):
         messages.insert(0, {"role": "system", "content": LLM_DATA.system_message})
         request_params['messages'] = messages
     # Call the create method with the parameters from the ModelConfig
-    response = client.chat.completions.create(**request_params).choices[0].message.content
+    response = client.chat(**model_config_to_json(request_params))['message']['content']
+    print("ZERO_SHOT",response)
     return response
 
 
@@ -79,7 +97,7 @@ def promptStream(expert_selected, model_choice: ModelSize, messages):
             request_params['stream'] = True
         #Call the create method with the parameters from the ModelConfig
         # Simulate sending the initial prompt to the model and receiving a stream of responses
-        responses = client.chat.completions.create(**request_params)
+        responses = client.chat(**model_config_to_json(request_params))
         return responses
     except Exception as e:
         gr.Error(f"Error during model prompt: {e}")

@@ -105,7 +105,7 @@ def botStream(expert_selected,history, model_dropdown):
                 history[-1].append("")  # Add an empty string if the second element is missing
             else:
                 history[-1][1] = ""  # Initialize the second element with an empty string if it's None
-        history[-1][1] += chunk.choices[0].delta.content
+        history[-1][1] += chunk['message']['content']
         yield history ,"" 
 
     end_time = time.perf_counter_ns()
