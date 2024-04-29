@@ -1,13 +1,16 @@
-from dataclasses import asdict
+from dataclasses import asdict, dataclass
 import subprocess
 import os
+from typing import Dict, List, Optional, Union
 import gradio as gr
 import ollama
+from pydantic_core import CoreConfig
 
-from ControllerExperts.experts_logic import ModelConfig, getLlmData
+from ControllerExperts.experts_logic import getLlmData
 from modulesFolders import CHATS_DIR
-from utils import read_json_file
 from enum import Enum
+
+
 
 class ModelSize(Enum):
     SMALL_MODEL = "small_model"
@@ -17,7 +20,7 @@ class ModelSize(Enum):
 
 MODEL_SIZE_ITEMS = [model.value for model in ModelSize]
 
-def model_config_to_json(config: ModelConfig):
+def model_config_to_json(config: CoreConfig):
     json_output = {
         "messages": config['messages'],
         "model": config['model'],
@@ -42,66 +45,45 @@ if not os.path.exists(CHATS_DIR):
 
 client = ollama.Client()
 
-def zero_shot_for_agents(expert_selected,model_choice: ModelSize, prompt , system_message = ''):
+def llm_call(expert_selected, model_choice: ModelSize, messages: Union[str, List[Dict]], system_message: str = '', stream: bool = False):
+    # Fetch the LLM data based on expert selection
     LLM_DATA = getLlmData(expert_selected)
-    # Choose the model configuration based on model_choice
+    # Fetch the model configuration based on the selected size
     model_config = getattr(LLM_DATA, model_choice)
-    # Convert the selected ModelConfig instance to a dictionary
+    # Convert the ModelConfig instance to a dictionary
     request_params = asdict(model_config)
-    # Handle 'prompt' based on its type
-    if isinstance(prompt, str):
-        # If 'prompt' is a string, create a message list including the system message if provided
-        message = [
-            {"role": "system", "content": LLM_DATA.system_message + system_message if system_message else LLM_DATA.system_message },
-            {"role": "user", "content": prompt}
+    
+    # Prepare the 'messages' parameter based on the type of 'messages' input
+    if isinstance(messages, str):
+        # If 'messages' is a string, it is treated as a user's prompt with an optional system message prepended
+        message_list = [
+            {"role": "system", "content": LLM_DATA.system_message + system_message if system_message else LLM_DATA.system_message},
+            {"role": "user", "content": messages}
         ]
-    elif isinstance(prompt, list):
-        # If 'prompt' is a list, use it directly
-        prompt[0]['content'] = LLM_DATA.system_message + prompt[0]['content']
-        message = prompt
+    elif isinstance(messages, list):
+        # If 'messages' is already a list, use it directly
+        if messages and "role" in messages[0]:
+            # Optionally prepend system message if the list is structured correctly
+            messages[0]['content'] = LLM_DATA.system_message + messages[0]['content']
+        message_list = messages
     else:
-        raise TypeError("The 'prompt' argument must be either a string or a list of message dictionaries.")
-    request_params['messages'] = message
-    # Call the create method with the parameters from the ModelConfig
-    response = client.chat(**model_config_to_json(request_params))['message']['content']
-    return response
-
-def zero_shot(expert_selected,model_choice: ModelSize, messages):
-    LLM_DATA = getLlmData(expert_selected)
-    # Choose the model configuration based on model_choice
-    model_config = getattr(LLM_DATA, model_choice)
-    # Convert the selected ModelConfig instance to a dictionary
-    request_params = asdict(model_config)
-    # Ensure 'messages' is provided and is a list
-    if not request_params.get('messages'):
-        messages.insert(0, {"role": "system", "content": LLM_DATA.system_message})
-        request_params['messages'] = messages
-    # Call the create method with the parameters from the ModelConfig
-    response = client.chat(**model_config_to_json(request_params))['message']['content']
-    print("ZERO_SHOT",response)
-    return response
-
-
-def promptStream(expert_selected, model_choice: ModelSize, messages):
+        raise TypeError("The 'messages' argument must be either a string or a list of message dictionaries.")
+    
+    # Add the prepared message list to the request parameters
+    request_params['messages'] = message_list
+    # Set the 'stream' parameter in the request if streaming is required
+    if stream:
+        request_params['stream'] = True
+    
+    # Make the API call using the prepared configuration
     try:
-        LLM_DATA = getLlmData(expert_selected)
-        # Choose the model configuration based on model_choice
-        model_config = getattr(LLM_DATA, model_choice)
-        # Convert the selected ModelConfig instance to a dictionary
-        request_params = asdict(model_config)
-        # Ensure 'messages' is provided and is a list
-        if not request_params.get('messages'):
-            messages.insert(0, {"role": "system", "content": LLM_DATA.system_message})
-            request_params['messages'] = messages
-        if not request_params.get('stream'):
-            request_params['stream'] = True
-        #Call the create method with the parameters from the ModelConfig
-        # Simulate sending the initial prompt to the model and receiving a stream of responses
-        responses = client.chat(**model_config_to_json(request_params))
-        return responses
+        response = client.chat(**model_config_to_json(request_params))
+        if stream:
+            return response  # Assume response is a stream of messages when streaming
+        else:
+            return response['message']['content']  # Assume response contains a message content when not streaming
     except Exception as e:
-        gr.Error(f"Error during model prompt: {e}")
-
+        print(f"Error during model interaction: {e}")
 
 
 def get_model_list():
@@ -121,3 +103,4 @@ def create_chat_completion(params):
 
     # Your OpenAI API call goes here
     pass
+

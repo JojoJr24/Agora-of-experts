@@ -2,7 +2,7 @@ import json
 import os
 import importlib.util
 
-from ControllerLLM.llm_manager import zero_shot_for_agents
+from ControllerLLM.llm_manager import llm_call
 from modulesFolders import TOOLS_DIR
 from utils import createMessages
 
@@ -47,7 +47,7 @@ def tool_bot(expert_selected,history,tools_dropdown,model_dropdown , recursion =
         {tools_info}
         """
     # Generate the plan using the zero_shot_for_agents function
-    plan_prompt_response = zero_shot_for_agents(expert_selected,model_dropdown,prompt= createMessages(history,system_message), system_message= system_message)
+    plan_prompt_response = llm_call(expert_selected,model_dropdown,messages= createMessages(history,system_message), system_message= system_message)
     print(plan_prompt_response)
 
     responses = ""
@@ -85,5 +85,5 @@ def tool_bot(expert_selected,history,tools_dropdown,model_dropdown , recursion =
         Responses from the tools:
         {responses}
         """
-    final_response = zero_shot_for_agents(expert_selected,model_dropdown,prompt=createMessages(history,final_system_message) , system_message= final_system_message)
+    final_response = llm_call(expert_selected,model_dropdown,messages=createMessages(history,final_system_message) , system_message= final_system_message)
     return final_response

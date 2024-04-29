@@ -2,7 +2,7 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 import ollama
 import chromadb
 import gradio as gr
-from ControllerLLM.llm_manager import ModelSize, zero_shot_for_agents
+from ControllerLLM.llm_manager import ModelSize, llm_call
 from modulesFolders import CHROMA_DIR
 
 client = chromadb.PersistentClient(path=CHROMA_DIR)
@@ -53,7 +53,7 @@ def getRespuestas(prompt:str, collectionName:str):
 
 def generateResponse(expert_selected,prompt:str, model:ModelSize, collection:str):
     data = getRespuestas(prompt=prompt, collectionName=collection)
-    response = zero_shot_for_agents(expert_selected,model,
+    response = llm_call(expert_selected,model,
         f"Using this data: {data}. Respond to this prompt: {prompt}"
         )
     return response

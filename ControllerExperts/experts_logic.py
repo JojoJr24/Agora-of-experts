@@ -4,11 +4,12 @@ import os
 from typing import Dict, Any, List, Optional
 import datetime
 import gradio as gr
+from CONFIG import LOCATION
 from modulesFolders import EXPERTS_DIR
 
 @dataclass
 class ModelConfig:
-    messages: Optional[List[Dict]] = None  # Se ha cambiado a Optional para permitir el valor None
+    messages: Optional[List[Dict]] = None  # Se ha cambiado a Optional para permitir el valor None    
     model: Optional[str] = None
     frequency_penalty: float = 0.0
     max_tokens: int = 4096
@@ -36,6 +37,7 @@ class Config:
         small_model = ModelConfig(**small_model_data)
         medium_model = ModelConfig(**medium_model_data)
         big_model = ModelConfig(**big_model_data)
+
 
         return cls(
             system_message=data.get("system_message", ""),
@@ -68,7 +70,7 @@ def getLlmData(expert_selected, original = False):
     ret = read_json_file(expert_selected)
     if original:
         return ret
-    ret.system_message = f"Today is: {datetime.datetime.now()}. You are in buenos aires - Argentina \n" + LLM_DATA.system_message
+    ret.system_message = f"Today is: {datetime.datetime.now()}. You are in {LOCATION} \n" + LLM_DATA.system_message
     return ret
 
 def getAllExperts():

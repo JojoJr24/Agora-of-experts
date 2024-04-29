@@ -1,10 +1,10 @@
 import json
 import os
 from ControllerChains.modulos_logic import MODULOS
-from ControllerExperts.experts_logic import LLM_DATA, getAllExperts, getLlmData
-from ControllerLLM.llm_manager import CHATS_DIR, ModelSize , promptStream , zero_shot
+from ControllerExperts.experts_logic import  getLlmData
+from ControllerLLM.llm_manager import CHATS_DIR, ModelSize, llm_call  
 from ControllerRAG.rag_logic import generateResponse
-from ControllerTools.tools_logic import TOOLS, tool_bot
+from ControllerTools.tools_logic import tool_bot
 from utils import createMessages
 import gradio as gr
 import time
@@ -76,7 +76,7 @@ def bot(expert_selected,history, model_dropdown):
     start_time = time.perf_counter_ns()
     messages = []
     messages = createMessages(history)
-    response = zero_shot(expert_selected,model_dropdown,messages)
+    response = llm_call(expert_selected,model_dropdown,messages)
     # Check if the last item in history has less than 2 elements, or the second element is None
     if not history or len(history[-1]) < 2 or history[-1][1] is None:
         if len(history[-1]) < 2:
@@ -93,10 +93,9 @@ def bot(expert_selected,history, model_dropdown):
 def botStream(expert_selected,history, model_dropdown):
     messages = []
     messages = createMessages(history)
-    responses = promptStream(expert_selected,model_dropdown,messages)
+    responses = llm_call(expert_selected,model_dropdown,messages, stream=True)
     start_time = time.perf_counter_ns() 
     token_counter = 0
-    
     for chunk in responses:
         token_counter += 1
         # Check if the last item in history has less than 2 elements, or the second element is None
@@ -158,7 +157,7 @@ def save_conversation(expert_selected,history,conversation_dropdown ):
     history_dump = json.dumps(history, indent=2)
     conversation_name = conversation_dropdown
     if not conversation_name:
-        conversation_name = zero_shot(
+        conversation_name = llm_call(
             expert_selected=expert_selected,
             model_choice=ModelSize.SMALL_MODEL.value,  
             messages=[{"role":"system", "content":"You are a AI that create very short titles for chats in a chatbot. The user will give you chats histories and you must create a title in no more than 6 words"}, {"role": "user", "content": history_dump}]
