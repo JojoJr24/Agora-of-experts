@@ -40,8 +40,8 @@ class AoeTheme(Base):
             font_mono=font_mono,
         )
         super().set(
-            body_background_fill="repeating-linear-gradient(45deg, *neutral_200, *neutral_200 10px, *neutral_100 10px, *neutral_100 20px)",
-            body_background_fill_dark="repeating-linear-gradient(45deg, *neutral_800, *neutral_800 10px, *neutral_900 10px, *neutral_900 20px)",
+            #body_background_fill="repeating-linear-gradient(45deg, *neutral_200, *neutral_200 10px, *neutral_100 10px, *neutral_100 20px)",
+            #body_background_fill_dark="repeating-linear-gradient(45deg, *neutral_800, *neutral_800 10px, *neutral_900 10px, *neutral_900 20px)",
             slider_color="*secondary_300",
             slider_color_dark="*secondary_600",
             block_title_text_weight="600",

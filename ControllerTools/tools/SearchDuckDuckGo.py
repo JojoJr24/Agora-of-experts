@@ -3,7 +3,7 @@ from duckduckgo_search import DDGS
 def search_web(query):
     results = f""" This is a list of sites with information about the topic. Show the user the name, the href and a description:
     
-    {DDGS().text(query, max_results=5)}
+    {DDGS().text(query, max_results=10)}
     """
     return results
 
