@@ -4,10 +4,12 @@ import os
 from typing import Dict, List, Optional, Union
 import gradio as gr
 import ollama
+from openai import OpenAI
 from pydantic_core import CoreConfig
 
 from CONFIG import VISION_MODEL
 from ControllerExperts.experts_logic import getLlmData
+from KEYS_CONFIG import OPENAI_KEY
 from modulesFolders import CHATS_DIR
 from enum import Enum
 
@@ -45,6 +47,27 @@ if not os.path.exists(CHATS_DIR):
     os.makedirs(CHATS_DIR)
 
 client = ollama.Client()
+# List local models using ollama
+result = subprocess.run(["ollama", "list"], capture_output=True, text=True)
+local_output = result.stdout.strip().split("\n")[1:]  # Skip the first line (header)
+ollama_models = [line.split()[0] for line in local_output]  # Extract model names
+# Set up OpenAI API key (ensure this is set in your environment or set directly here)
+clientOAI = OpenAI()
+# Get model list from OpenAI
+openai_models_list= clientOAI.models.list().data
+openai_models = [model.id for model in openai_models_list if 'gpt' in model.id or 'davinci' in model.id or 'curie' in model.id]
+
+def get_model_list():
+    try:       
+        # Combine local and OpenAI model lists
+        combined_model_list = ollama_models + openai_models
+        return combined_model_list
+    except Exception as e:
+        print(e)
+        gr.Error(f"Error executing command: {e}")
+        return []
+#Init
+get_model_list()
 
 def llm_call(expert_selected, model_choice: ModelSize, messages: Union[str, List[Dict]], system_message: str = '', stream: bool = False, files: List[str] = []):
     # Fetch the LLM data based on expert selection
@@ -81,27 +104,41 @@ def llm_call(expert_selected, model_choice: ModelSize, messages: Union[str, List
     if stream:
         request_params['stream'] = True
     
+    response = "Error"
     # Make the API call using the prepared configuration
     try:
-        response = client.chat(**model_config_to_json(request_params))
-        if stream:
-            return response  # Assume response is a stream of messages when streaming
+        if esExterno(request_params["model"]) :
+            response = clientOAI.chat.completions.create(
+                        model=request_params["model"],
+                        messages=request_params["messages"],
+                        temperature=request_params["temperature"],
+                        max_tokens=256,
+                        top_p=1,
+                        frequency_penalty=0,
+                        presence_penalty=0,
+                        stream=request_params["stream"]
+                        )
+            print(response)
+            if stream:
+                return response   # Assume response is a stream of messages when streaming
+            else:
+                return response.choices[0].message.content # Assume response contains a message content when not streaming
         else:
-            return response['message']['content']  # Assume response contains a message content when not streaming
+            response = client.chat(**model_config_to_json(request_params))
+            if stream:
+                return response  # Assume response is a stream of messages when streaming
+            else:
+                return response['message']['content']  # Assume response contains a message content when not streaming
+        
     except Exception as e:
         gr.Error(f"Error during model interaction: {e}")
         return ""
 
 
-def get_model_list():
-    try:
-        result = subprocess.run(["ollama", "list"], capture_output=True, text=True)
-        output = result.stdout.strip().split("\n")[1:]  # Omitir la primera línea (encabezado)
-        model_list = [line.split()[0] for line in output]  # Extraer los nombres de los modelos
-        return model_list
-    except Exception as e:
-        gr.Error(f"Error executing command: {e}")
-        return []
+def esExterno(modelo):
+    print(modelo, openai_models)
+    return modelo in openai_models
+
     
 
 def create_chat_completion(params):

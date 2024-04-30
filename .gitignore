@@ -168,3 +168,5 @@ ControllerChat/chats/*
 .vscode/
 
 ControllerRAG/db/*
+
+KEYS_CONFIG.py

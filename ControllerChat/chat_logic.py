@@ -2,7 +2,7 @@ import json
 import os
 from ControllerChains.modulos_logic import MODULOS
 from ControllerExperts.experts_logic import  getLlmData
-from ControllerLLM.llm_manager import CHATS_DIR, ModelSize, llm_call  
+from ControllerLLM.llm_manager import CHATS_DIR, ModelSize, esExterno, llm_call  
 from ControllerRAG.rag_logic import generateResponse
 from ControllerTools.tools_logic import tool_bot
 from utils import createMessages, is_path
@@ -62,6 +62,7 @@ def send_to_bot(history,
 
 
 def call_expert(expert_selected, history, model_dropdown, stream=False):
+    modelName = getattr(getLlmData(expert_selected), model_dropdown).model
     start_time = time.perf_counter_ns()
     files = []
     if len(history) > 1 and is_path( history[-2][0][0]):
@@ -76,10 +77,21 @@ def call_expert(expert_selected, history, model_dropdown, stream=False):
                              files=files, 
                              stream=True)
         token_counter = 0
+        print(responses)
         for chunk in responses:
             token_counter += 1
-            update_history(history, chunk['message']['content'])
+            if esExterno(modelName) :
+                text = chunk.choices[0].delta.content
+                print("externo")
+                print(text)
+                if text :
+                    update_history(history,  text)
+            else :
+                print("local")
+                update_history(history, chunk['message']['content'])
             yield history, ""
+            
+            
         end_time = time.perf_counter_ns()
         tps = f'{int(token_counter / ((end_time - start_time) / 1e9))}TPS'
         yield history, tps
