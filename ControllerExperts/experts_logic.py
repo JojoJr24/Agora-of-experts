@@ -10,6 +10,7 @@ from modulesFolders import EXPERTS_DIR
 @dataclass
 class ModelConfig:
     messages: Optional[List[Dict]] = None  # Se ha cambiado a Optional para permitir el valor None    
+    files: Optional[List[str]]= None
     model: Optional[str] = None
     frequency_penalty: float = 0.0
     max_tokens: int = 4096
@@ -66,7 +67,6 @@ DEFAULT_EXPERT = "AoE_Basic"
 LLM_DATA = read_json_file(DEFAULT_EXPERT)
 
 def getLlmData(expert_selected, original = False):
-    print(expert_selected)
     ret = read_json_file(expert_selected)
     if original:
         return ret

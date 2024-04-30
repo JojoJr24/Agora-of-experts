@@ -5,7 +5,7 @@ from ControllerExperts.experts_logic import  getLlmData
 from ControllerLLM.llm_manager import CHATS_DIR, ModelSize, llm_call  
 from ControllerRAG.rag_logic import generateResponse
 from ControllerTools.tools_logic import tool_bot
-from utils import createMessages
+from utils import createMessages, is_path
 import gradio as gr
 import time
 
@@ -14,15 +14,24 @@ def print_like_dislike(x: gr.LikeData):
 
 def add_message(history, message, expert_selected, model):
     modelName = getattr(getLlmData(expert_selected), model).model
-    for x in message["files"]:
-        history.append(((x,), None))
+    for file in  message["files"] :
+        history.append(((file,), None))
+    
     if message["text"] is not None:
         history.append((message["text"], None))
-    return history, gr.MultimodalTextbox(value=None, interactive=False), modelName
+        
+    return history,  gr.MultimodalTextbox(interactive=True, file_types=["image"], placeholder="Enter message or upload file...", show_label=False),modelName
 
-def send_to_bot(history, expert_selected, tps_text, use_agent_checkbox, 
-                modulo_dropdown, stream_checkbox, model_dropdown, 
-                tools_agent_checkbox, tools_dropdown, collection_agent_checkbox, 
+def send_to_bot(history,
+                expert_selected, 
+                tps_text, 
+                use_agent_checkbox, 
+                modulo_dropdown, 
+                stream_checkbox, 
+                model_dropdown, 
+                tools_agent_checkbox, 
+                tools_dropdown, 
+                collection_agent_checkbox, 
                 collections_dropdown):
 
     # Procesar el agente de módulos
@@ -46,6 +55,7 @@ def send_to_bot(history, expert_selected, tps_text, use_agent_checkbox,
         yield history, "-1WPS"
         return
 
+ 
     # Llamar a un experto si ninguna de las otras condiciones se cumple
     yield from call_expert(expert_selected, history, model_dropdown, stream_checkbox)
 
@@ -53,10 +63,18 @@ def send_to_bot(history, expert_selected, tps_text, use_agent_checkbox,
 
 def call_expert(expert_selected, history, model_dropdown, stream=False):
     start_time = time.perf_counter_ns()
+    files = []
+    if len(history) > 1 and is_path( history[-2][0][0]):
+        files = [history[-2][0][0]]
+        
     messages = createMessages(history)
     
     if stream:
-        responses = llm_call(expert_selected, model_dropdown, messages, stream=True)
+        responses = llm_call(expert_selected=expert_selected, 
+                             model_choice=model_dropdown, 
+                             messages=messages, 
+                             files=files, 
+                             stream=True)
         token_counter = 0
         for chunk in responses:
             token_counter += 1
@@ -66,7 +84,10 @@ def call_expert(expert_selected, history, model_dropdown, stream=False):
         tps = f'{int(token_counter / ((end_time - start_time) / 1e9))}TPS'
         yield history, tps
     else:
-        response = llm_call(expert_selected, model_dropdown, messages)
+        response = llm_call(expert_selected=expert_selected,
+                            model_choice=model_dropdown,
+                            messages=messages,
+                            files=files)
         update_history(history, response)
         end_time = time.perf_counter_ns()
         tps = f'{int(len(response.split()) / ((end_time - start_time) / 1e9))}WPS'

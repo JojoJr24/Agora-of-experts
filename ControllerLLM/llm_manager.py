@@ -6,6 +6,7 @@ import gradio as gr
 import ollama
 from pydantic_core import CoreConfig
 
+from CONFIG import VISION_MODEL
 from ControllerExperts.experts_logic import getLlmData
 from modulesFolders import CHATS_DIR
 from enum import Enum
@@ -45,7 +46,7 @@ if not os.path.exists(CHATS_DIR):
 
 client = ollama.Client()
 
-def llm_call(expert_selected, model_choice: ModelSize, messages: Union[str, List[Dict]], system_message: str = '', stream: bool = False):
+def llm_call(expert_selected, model_choice: ModelSize, messages: Union[str, List[Dict]], system_message: str = '', stream: bool = False, files: List[str] = []):
     # Fetch the LLM data based on expert selection
     LLM_DATA = getLlmData(expert_selected)
     # Fetch the model configuration based on the selected size
@@ -62,13 +63,18 @@ def llm_call(expert_selected, model_choice: ModelSize, messages: Union[str, List
         ]
     elif isinstance(messages, list):
         # If 'messages' is already a list, use it directly
-        if messages and "role" in messages[0]:
-            # Optionally prepend system message if the list is structured correctly
-            messages[0]['content'] = LLM_DATA.system_message + messages[0]['content']
-        message_list = messages
+        message_list = [
+            {"role": "system", "content": LLM_DATA.system_message + system_message if system_message else LLM_DATA.system_message},
+            *messages
+        ]
+
     else:
         raise TypeError("The 'messages' argument must be either a string or a list of message dictionaries.")
     
+    #Vision
+    if len(files) > 0:
+        request_params["model"] = VISION_MODEL
+        message_list[-1]["images"] = files
     # Add the prepared message list to the request parameters
     request_params['messages'] = message_list
     # Set the 'stream' parameter in the request if streaming is required
@@ -83,7 +89,8 @@ def llm_call(expert_selected, model_choice: ModelSize, messages: Union[str, List
         else:
             return response['message']['content']  # Assume response contains a message content when not streaming
     except Exception as e:
-        print(f"Error during model interaction: {e}")
+        gr.Error(f"Error during model interaction: {e}")
+        return ""
 
 
 def get_model_list():

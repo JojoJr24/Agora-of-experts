@@ -1,5 +1,6 @@
 import random
 import json
+import os
 
 def createMessages(history , system_message = ''):
     messages = []
@@ -12,13 +13,13 @@ def createMessages(history , system_message = ''):
         if item[0]:  # Check if the user message is not None
             messages.append({
                 'role': 'user',
-                'content': item[0]
+                'content': str(item[0])
             })
         # Assistant message
         if len(item) > 1 and item[1]:  # Check if there is an assistant message and it's not None
             messages.append({
                 'role': 'assistant',
-                'content': item[1]
+                'content': str(item[1])
             })
     return messages
 
@@ -44,3 +45,8 @@ def write_json_file(data, file_path):
         return {"error": str(e)}
     
     
+def is_path(s):
+    # A basic approach to check if a string could be a path is to look for directory separators
+    # common in file paths (like "/" in UNIX-like systems and "\" in Windows).
+    # This is a simple heuristic and might not cover all edge cases.
+    return os.path.sep in s or (os.path.altsep is not None and os.path.altsep in s)
