@@ -68,7 +68,7 @@ def get_model_list():
 #Init
 get_model_list()
 
-def llm_call(expert_selected, model_choice: ModelSize, messages: Union[str, List[Dict]], system_message: str = '', stream: bool = False, files: List[str] = []):
+def llm_call(expert_selected, model_choice: ModelSize, messages: Union[str, List[Dict]], system_message: str = '', stream: bool = False, files: List[str] = [], override_system_message: bool = False):
     # Fetch the LLM data based on expert selection
     LLM_DATA = getLlmData(expert_selected)
     # Fetch the model configuration based on the selected size
@@ -76,27 +76,31 @@ def llm_call(expert_selected, model_choice: ModelSize, messages: Union[str, List
     # Convert the ModelConfig instance to a dictionary
     request_params = asdict(model_config)
     
+    # Determine the system message to use based on override flag
+    final_system_message = system_message if override_system_message else LLM_DATA.system_message + system_message
+
     # Prepare the 'messages' parameter based on the type of 'messages' input
     if isinstance(messages, str):
         # If 'messages' is a string, it is treated as a user's prompt with an optional system message prepended
         message_list = [
-            {"role": "system", "content": LLM_DATA.system_message + system_message if system_message else LLM_DATA.system_message},
+            {"role": "system", "content": final_system_message},
             {"role": "user", "content": messages}
         ]
     elif isinstance(messages, list):
         # If 'messages' is already a list, use it directly
         message_list = [
-            {"role": "system", "content": LLM_DATA.system_message + system_message if system_message else LLM_DATA.system_message},
+            {"role": "system", "content": final_system_message},
             *messages
         ]
 
     else:
         raise TypeError("The 'messages' argument must be either a string or a list of message dictionaries.")
     
-    #Vision
+    # Handle vision models if files are provided
     if len(files) > 0:
         request_params["model"] = VISION_MODEL
         message_list[-1]["images"] = files
+    
     # Add the prepared message list to the request parameters
     request_params['messages'] = message_list
     # Set the 'stream' parameter in the request if streaming is required
@@ -104,9 +108,10 @@ def llm_call(expert_selected, model_choice: ModelSize, messages: Union[str, List
         request_params['stream'] = True
     
     response = "Error"
+    print(request_params)
     # Make the API call using the prepared configuration
     try:
-        if esExterno(request_params["model"]) :
+        if esExterno(request_params["model"]):
             response = clientOAI.chat.completions.create(
                         model=request_params["model"],
                         messages=request_params["messages"],
@@ -115,22 +120,17 @@ def llm_call(expert_selected, model_choice: ModelSize, messages: Union[str, List
                         top_p=1,
                         frequency_penalty=0,
                         presence_penalty=0,
-                        stream=request_params["stream"]
+                        stream=request_params['stream']
                         )
-            if stream:
-                return response   # Assume response is a stream of messages when streaming
-            else:
-                return response.choices[0].message.content # Assume response contains a message content when not streaming
+            return response if stream else response.choices[0].message.content
         else:
             response = client.chat(**model_config_to_json(request_params))
-            if stream:
-                return response  # Assume response is a stream of messages when streaming
-            else:
-                return response['message']['content']  # Assume response contains a message content when not streaming
+            return response if stream else response['message']['content']
         
     except Exception as e:
         gr.Error(f"Error during model interaction: {e}")
         return ""
+
 
 
 def esExterno(modelo):

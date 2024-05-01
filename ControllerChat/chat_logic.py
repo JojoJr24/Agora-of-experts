@@ -12,16 +12,6 @@ import time
 def print_like_dislike(x: gr.LikeData):
     print(x.index, x.value, x.liked)
 
-def add_message(history, message, expert_selected, model):
-    modelName = getattr(getLlmData(expert_selected), model).model
-    for file in  message["files"] :
-        history.append(((file,), None))
-    
-    if message["text"] is not None:
-        history.append((message["text"], None))
-        
-    return history,  gr.MultimodalTextbox(interactive=True, file_types=["image"], placeholder="Enter message or upload file...", show_label=False),modelName
-
 def send_to_bot(history,
                 expert_selected, 
                 tps_text, 
@@ -109,31 +99,25 @@ def update_history(history, content):
             history[-1][1] = ""  # Initialize the second element with an empty string if it's None
     history[-1][1] += content    
 
+def add_message(history, message, expert_selected, model):
+    modelName = getattr(getLlmData(expert_selected), model).model
+    for file in  message["files"] :
+        history.append(((file,), None))
+    
+    if message["text"] is not None:
+        history.append((message["text"], None))
+        
+    return history,  gr.MultimodalTextbox(interactive=True, file_types=["image"], placeholder="Enter message or upload file...", show_label=False),modelName
 
-def resendLast(history,
-               expert_selected,
-               tps_text,
-               use_agent_checkbox, 
-               modulo_dropdown,
-               stream_checkbox,
-               model_dropdown,
-               tools_agent_checkbox,
-               tools_dropdown,
-               collection_agent_checkbox,
-               collections_dropdown):
+
+def resendLast(history, expert_selected, model):
+    modelName = getattr(getLlmData(expert_selected), model).model
     if history:
         history[-1][1] = None
-        yield from send_to_bot(history,
-                        expert_selected,
-                        tps_text,
-                        use_agent_checkbox,
-                        modulo_dropdown,
-                        stream_checkbox,
-                        model_dropdown,
-                        tools_agent_checkbox,
-                        tools_dropdown,
-                        collection_agent_checkbox,
-                        collections_dropdown)
+        
+    return history,  gr.MultimodalTextbox(interactive=True, file_types=["image"], placeholder="Enter message or upload file...", show_label=False),modelName
+
+
     
 def removeLast(history):
        history.pop()
@@ -153,13 +137,16 @@ def editLast(chatbot):
 conversation_list = []
 
 def save_conversation(expert_selected,history,conversation_dropdown ):
-    history_dump = json.dumps(history, indent=2)
+    history_dump = json.dumps(history[0][0], indent=2)
+    print(history_dump)
     conversation_name = conversation_dropdown
     if not conversation_name:
         conversation_name = llm_call(
             expert_selected=expert_selected,
-            model_choice=ModelSize.SMALL_MODEL.value,  
-            messages=[{"role":"system", "content":"You are a AI that create very short titles for chats in a chatbot. The user will give you chats histories and you must create a title in no more than 6 words"}, {"role": "user", "content": history_dump}]
+            model_choice=ModelSize.SMALL_MODEL.value, 
+            system_message= "You are created to write very short titles that describe a text with precision. The text must be shorter than than 6 words",
+            messages= history_dump,
+            override_system_message=True
         )
         gr.Info(f"Chat saved as: {conversation_name}")
     filename = f"{CHATS_DIR}/{conversation_name[:32]}.json"

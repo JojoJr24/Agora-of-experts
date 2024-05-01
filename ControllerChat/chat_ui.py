@@ -71,7 +71,8 @@ def chat_tab():
                             with gr.Row():
                                 clear = gr.ClearButton([chat_input, chatbot,conversation_dropdown],scale=1, variant='primary')
                                 resend_last_button = gr.Button("Re-send",scale=1, min_width=1)
-                                resend_last_button.click(resendLast, [chatbot, 
+                                resend_click = resend_last_button.click(resendLast,[chatbot,experts_dropdown, model_dropdown],[chatbot, chat_input, model_name])
+                                resend_click_then = resend_click.then(send_to_bot, [chatbot, 
                                                                       experts_dropdown,
                                                                       tps_text,
                                                                       use_agent_checkbox, 
@@ -81,7 +82,8 @@ def chat_tab():
                                                                       tools_agent_checkbox,
                                                                       tools_dropdown,
                                                                       collection_agent_checkbox,
-                                                                      collections_dropdown] , [chatbot , tps_text])
+                                                                      collections_dropdown] , [chatbot , tps_text], api_name="bot_response", show_progress=True)
+                                resend_click_then.then(lambda: gr.MultimodalTextbox(interactive=True), None, [chat_input])
                             with gr.Row():
                                 back_last_button = gr.Button("Back",scale=1, min_width=1)
                                 back_last_button.click(removeLast, chatbot , chatbot)
@@ -103,7 +105,7 @@ def chat_tab():
                                                     collection_agent_checkbox,
                                                     collections_dropdown] , [chatbot , tps_text], api_name="bot_response", show_progress=True)
                 # Restablece el área de entrada multimodal tras la respuesta del bot
-                bot_msg.then(lambda: gr.MultimodalTextbox(interactive=True), None, [chat_input])
+                bot_msg.then(lambda: None, None, [chat_input])
                 # Permite a los usuarios dar 'me gusta' o 'no me gusta' a los mensajes
                 chatbot.like(print_like_dislike, None, None)
     return tab
