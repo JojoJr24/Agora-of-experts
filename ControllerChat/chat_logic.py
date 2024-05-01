@@ -2,7 +2,7 @@ import json
 import os
 from ControllerChains.modulos_logic import MODULOS
 from ControllerExperts.experts_logic import  getLlmData
-from ControllerLLM.llm_manager import CHATS_DIR, ModelSize, esExterno, llm_call  
+from ControllerLLM.llm_manager import CHATS_DIR, ModelSize, esGROQ, esOAI, llm_call  
 from ControllerRAG.rag_logic import generateResponse
 from ControllerTools.tools_logic import tool_bot
 from utils import createMessages, is_path
@@ -67,20 +67,23 @@ def call_expert(expert_selected, history, model_dropdown, stream=False):
                              files=files, 
                              stream=True)
         token_counter = 0
-        for chunk in responses:
-            token_counter += 1
-            if esExterno(modelName) :
-                text = chunk.choices[0].delta.content
-                if text :
-                    update_history(history,  text)
-            else :
-                update_history(history, chunk['message']['content'])
-            yield history, ""
-            
-            
-        end_time = time.perf_counter_ns()
-        tps = f'{int(token_counter / ((end_time - start_time) / 1e9))}TPS'
-        yield history, tps
+        if responses:
+            for chunk in responses:
+                token_counter += 1
+                if esOAI(modelName) or esGROQ(modelName) :
+                    text = chunk.choices[0].delta.content
+                    if text :
+                        update_history(history,  text)
+                else :
+                    update_history(history, chunk['message']['content'])
+                yield history, ""
+                
+                
+            end_time = time.perf_counter_ns()
+            tps = f'{int(token_counter / ((end_time - start_time) / 1e9))}TPS'
+            yield history, tps
+        else:
+            gr.Error("Call failed")    
     else:
         response = llm_call(expert_selected=expert_selected,
                             model_choice=model_dropdown,

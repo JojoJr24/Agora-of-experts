@@ -1,6 +1,7 @@
 gradio
 ollama 
 openai
+groq
 extensions
 chromadb
 langchain-text-splitters
