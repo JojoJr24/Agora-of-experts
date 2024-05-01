@@ -117,7 +117,6 @@ def llm_call(expert_selected, model_choice: ModelSize, messages: Union[str, List
                         presence_penalty=0,
                         stream=request_params["stream"]
                         )
-            print(response)
             if stream:
                 return response   # Assume response is a stream of messages when streaming
             else:
@@ -135,7 +134,6 @@ def llm_call(expert_selected, model_choice: ModelSize, messages: Union[str, List
 
 
 def esExterno(modelo):
-    print(modelo, openai_models)
     return modelo in openai_models
 
     

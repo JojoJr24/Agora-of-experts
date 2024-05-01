@@ -77,17 +77,13 @@ def call_expert(expert_selected, history, model_dropdown, stream=False):
                              files=files, 
                              stream=True)
         token_counter = 0
-        print(responses)
         for chunk in responses:
             token_counter += 1
             if esExterno(modelName) :
                 text = chunk.choices[0].delta.content
-                print("externo")
-                print(text)
                 if text :
                     update_history(history,  text)
             else :
-                print("local")
                 update_history(history, chunk['message']['content'])
             yield history, ""
             
