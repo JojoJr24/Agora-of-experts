@@ -31,6 +31,8 @@ def tool_bot(expert_selected,history,tools_dropdown,model_dropdown , recursion =
     # Extract the last question in the task
     
     tools_info = "\n".join([f'tool:"{tool}", description:"{TOOLS[tool+"_call"]()}"' for tool in tools_dropdown])
+    recursion_system_message= "Another AI needs your help. She received a task that she was unable to complete. He passed you the original assignment and the information he was able to get. Analyze the information to see what is missing, and what is missing to be able to finish the task.\n"
+    
     system_message= f"""You have some tools.First you must write step by step what data you will need to answer the question in the best way posible using the tools. After that you must generate a JSON object with the list of tools, each one with two keys, tool and parameter(even if there is only one tool, it must be a list of one object).
         This JSON structure is essential for requesting operations from your toolset. Please ensure that each tool interaction follows this format, adapting the parameter content as required by the specific tool's documentation.
         Structure:
@@ -46,6 +48,7 @@ def tool_bot(expert_selected,history,tools_dropdown,model_dropdown , recursion =
         tool:"helper", description:If you need to send to a tool the result of a previous tool call this helper"
         {tools_info}
         """
+    if "I know this:" in history[-1][0] : system_message = recursion_system_message + system_message
     # Generate the plan using the zero_shot_for_agents function
     plan_prompt_response = llm_call(expert_selected,model_dropdown,messages= createMessages(history,system_message), system_message= system_message)
     print(plan_prompt_response)
