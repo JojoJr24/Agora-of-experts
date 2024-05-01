@@ -24,7 +24,7 @@ def cargar_tools():
 
 
 TOOLS = cargar_tools()
-NOMBRES_TOOLS = [nombre for nombre in TOOLS.keys() if '_call' not in nombre and '_helper' not in nombre]
+NOMBRES_TOOLS = [nombre for nombre in TOOLS.keys() if '_call' not in nombre and '_name' not in nombre  and '_helper' not in nombre]
 
 
 def tool_bot(expert_selected,history,tools_dropdown,model_dropdown , recursion = 0):

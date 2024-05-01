@@ -42,3 +42,6 @@ def python_expression_call():
         Uso de expresiones lambda para operaciones inmediatas:
             Multiplicar todos los elementos de una lista por un número usando map y una expresión lambda: list(map(lambda x: x * 2, numbers))
 """
+
+def python_expression_name():
+    return "python_expression"

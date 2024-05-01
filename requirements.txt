@@ -7,3 +7,4 @@ chromadb
 langchain-text-splitters
 wikipedia
 duckduckgo-search
+tavily-python

@@ -18,3 +18,6 @@ def search_wikipedia(topic):
 #Es el tipo de datos que lleva el parametro
 def search_wikipedia_call():
     return "Use it when you need information about a topic."
+
+def search_wikipedia_name():
+    return "search_wikipedia"

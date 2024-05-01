@@ -164,7 +164,8 @@ ControllerExperts/experts/*
 ControllerChat/chats/*
 # But not this file
 !ControllerExperts/experts/AoE_Basic.json
-
+!ControllerExperts/experts/AoE_Basic(GROQ).json
+!ControllerExperts/experts/AoE_Basic(OAI).json
 .vscode/
 
 ControllerRAG/db/*

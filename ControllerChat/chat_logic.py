@@ -147,7 +147,7 @@ def save_conversation(expert_selected,history,conversation_dropdown ):
         conversation_name = llm_call(
             expert_selected=expert_selected,
             model_choice=ModelSize.SMALL_MODEL.value, 
-            system_message= "You are created to write very short titles that describe a text with precision. The text must be shorter than than 6 words",
+            system_message= "You are a label machine.You read a text and write a concise label that describe the text. The label must be shorter than than 6 words",
             messages= history_dump,
             override_system_message=True
         )

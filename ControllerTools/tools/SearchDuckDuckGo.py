@@ -12,7 +12,11 @@ def search_web(query):
 def search_web_call():
     return "Use it when you need to search the web for information about a topic."
 
+def search_web_name():
+    return "search_web"
+
 # Example usage:
 if __name__ == "__main__":
-    query = "DUCK"
+    query = "current Nvidia share price"
     results = search_web(query)
+    print(results)
