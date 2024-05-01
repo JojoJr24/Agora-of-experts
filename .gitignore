@@ -169,4 +169,4 @@ ControllerChat/chats/*
 
 ControllerRAG/db/*
 
-KEYS_CONFIG.py
+installed.txt

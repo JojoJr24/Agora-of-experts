@@ -9,7 +9,6 @@ from pydantic_core import CoreConfig
 
 from CONFIG import VISION_MODEL
 from ControllerExperts.experts_logic import getLlmData
-from KEYS_CONFIG import OPENAI_KEY
 from modulesFolders import CHATS_DIR
 from enum import Enum
 
