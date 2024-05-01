@@ -25,7 +25,7 @@ MODEL_SIZE_ITEMS = [model.value for model in ModelSize]
 def model_config_to_json(config: CoreConfig):
     json_output = {
         "messages": config['messages'],
-        "model": config['model'],
+        "model": esOLLAMA(config['model']),
         "stream": config['stream'],
         "options": {
             "seed": config['seed'],
@@ -49,22 +49,20 @@ client = ollama.Client()
 # List local models using ollama
 result = subprocess.run(["ollama", "list"], capture_output=True, text=True)
 local_output = result.stdout.strip().split("\n")[1:]  # Skip the first line (header)
-ollama_models = [line.split()[0] for line in local_output]  # Extract model names
+ollama_models = ["OLLAMA-" +line.split()[0] for line in local_output]  # Extract model names
 # Set up OpenAI API key (ensure this is set in your environment or set directly here)
 clientOAI = OpenAI()
 # Get model list from OpenAI
 openai_models_list= clientOAI.models.list().data
-print(openai_models_list)
 openai_models = ["OAI-" + model.id for model in openai_models_list if 'gpt' in model.id or 'davinci' in model.id or 'curie' in model.id]
 
 groq_models_list =  ['GROQ-llama3-8b-8192', 'GROQ-llama3-70b-8192', 'GROQ-mixtral-8x7b-32768', 'GROQ-gemma-7b-it']
-print(os.environ.get("GROQ_API_KEY"))
 clientGroq = Groq(api_key=os.environ.get("GROQ_API_KEY"),)
 
 def get_model_list():
     try:       
         # Combine local and OpenAI model lists
-        combined_model_list = ollama_models + openai_models + groq_models_list
+        combined_model_list = sorted(ollama_models + openai_models + groq_models_list)
         return combined_model_list
     except Exception as e:
         print(e)
@@ -115,7 +113,6 @@ def llm_direct_call(request_params, messages: Union[str, List[Dict]], system_mes
         request_params['stream'] = True
     
     response = "Error"
-    print(request_params)
     # Make the API call using the prepared configuration
     modelOAI = esOAI(request_params["model"])
     modelGROQ = esGROQ(request_params["model"])
@@ -125,7 +122,7 @@ def llm_direct_call(request_params, messages: Union[str, List[Dict]], system_mes
                         model=modelOAI,
                         messages=request_params["messages"],
                         temperature=request_params["temperature"],
-                        max_tokens=256,
+                        max_tokens=request_params["max_tokens"],
                         top_p=1,
                         frequency_penalty=0,
                         presence_penalty=0,
@@ -163,6 +160,12 @@ def esOAI(modelo):
 def esGROQ(modelo):
     if "GROQ-" in modelo:
         return modelo.replace("GROQ-", "")
+    else:
+        return None
+    
+def esOLLAMA(modelo):
+    if "OLLAMA-" in modelo:
+        return modelo.replace("OLLAMA-", "")
     else:
         return None
 

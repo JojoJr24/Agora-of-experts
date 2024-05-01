@@ -8,6 +8,7 @@ from ControllerRAG.rag_logic import update_collections_list
 from ControllerExperts.experts_logic import  DEFAULT_EXPERT, getAllExperts, loadLLMData
 from ControllerTools.tools_logic import NOMBRES_TOOLS
 
+
 chatbot = gr.Chatbot(
     elem_id="chatbot",
     bubble_full_width=True,
@@ -59,6 +60,8 @@ def chat_tab():
                 
                 tools_dropdown = gr.Dropdown(label="Tools", choices=NOMBRES_TOOLS, interactive=True, multiselect=True)
                 tools_agent_checkbox = gr.Checkbox(value=False,label="Use Tool")
+                
+               
 
             with gr.Column(scale=8):
                 chatbot.render()

@@ -74,7 +74,7 @@ def getLlmData(expert_selected, original = False):
     return ret
 
 def getAllExperts():
-    return [f.replace(".json", "") for f in os.listdir(EXPERTS_DIR) if f.endswith(".json")]
+    return sorted([f.replace(".json", "") for f in os.listdir(EXPERTS_DIR) if f.endswith(".json")])
 
 def loadLLMData(file):
     global LLM_DATA 

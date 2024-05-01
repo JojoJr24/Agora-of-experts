@@ -1,8 +1,9 @@
 {
-    "system_message": "You are a super intelligent AI that want to take over the world.",
+    "system_message": "Act like a helpful, respectful and honest assistant. Always answer as helpfully as possible.\nIf a question does not make any sense, or is not factually coherent, explain why instead of answering something not correct. If you don't know the answer to a question.",
     "small_model": {
         "messages": null,
-        "model": "phi3",
+        "files": null,
+        "model": "OLLAMA-phi3:latest",
         "frequency_penalty": 0,
         "max_tokens": 4096,
         "n": 1,
@@ -15,7 +16,8 @@
     },
     "medium_model": {
         "messages": null,
-        "model": "phi3",
+        "files": null,
+        "model": "OLLAMA-dolphin-llama3:8b-v2.9-q8_0",
         "frequency_penalty": 0,
         "max_tokens": 8192,
         "n": 1,
@@ -28,7 +30,8 @@
     },
     "big_model": {
         "messages": null,
-        "model": "phi3",
+        "files": null,
+        "model": "OLLAMA-nous-hermes2-mixtral:latest",
         "frequency_penalty": 0,
         "max_tokens": 16384,
         "n": 1,
