@@ -140,7 +140,6 @@ conversation_list = []
 
 def save_conversation(expert_selected,history,conversation_dropdown ):
     history_dump = json.dumps(history[0][0], indent=2)
-    print(history_dump)
     conversation_name = conversation_dropdown
     if not conversation_name:
         conversation_name = llm_call(

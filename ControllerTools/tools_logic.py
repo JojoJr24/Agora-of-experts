@@ -27,7 +27,8 @@ TOOLS = cargar_tools()
 NOMBRES_TOOLS = [nombre for nombre in TOOLS.keys() if '_call' not in nombre and '_name' not in nombre  and '_helper' not in nombre]
 
 
-def tool_bot(expert_selected,history,tools_dropdown,model_dropdown , recursion = 0):
+def tool_bot(expert_selected, history, tools_dropdown, model_dropdown, recursion=0):
+    print(f"\033[92mExtracting the last question in the task...\033[0m")
     # Extract the last question in the task
     
     tools_info = "\n".join([f'tool:"{tool}", description:"{TOOLS[tool+"_call"]()}"' for tool in tools_dropdown])
@@ -49,44 +50,50 @@ def tool_bot(expert_selected,history,tools_dropdown,model_dropdown , recursion =
         {tools_info}
         """
     if "I know this:" in history[-1][0] : system_message = recursion_system_message + system_message
+    print(f"\033[94mGenerating plan using zero-shot-for-agents function...\033[0m")
     # Generate the plan using the zero_shot_for_agents function
     plan_prompt_response = llm_call(expert_selected,model_dropdown,messages= createMessages(history,system_message), system_message= system_message)
     print(plan_prompt_response)
 
     responses = ""
     try:
+        print(f"\033[95mParsing JSON response...\033[0m")
         start_json = plan_prompt_response.find("{")
         end_json = plan_prompt_response.rfind("}") + 1
-        # Extrae el JSON del texto
+        # Extract the JSON from the text
         json_string = plan_prompt_response[start_json:end_json]
-        # Convierte la cadena JSON en un diccionario de Python
+        # Convert the JSON string to a Python dictionary
         data = json.loads(json_string)
         tools = []
-        # Suponiendo que data es el diccionario que contiene la información del JSON
+        # Assuming data is the dictionary containing the JSON information
         tools = data['tools'] 
-        # Recorre la lista de herramientas y sus parámetros
+        # Iterate over the list of tools and their parameters
         for tool in tools:
-            # Obtiene el nombre de la herramienta
+            # Get the tool name
             tool_name = tool['tool']
             if tool_name == "helper":
                 if recursion  < 3 :               
                     history[-1][0] += f"\n I know this: \n {responses}"
                     recursion += 1
+                    print(f"\033[91mRecursion detected! Recursing into tool_bot...\033[0m")
                     tool_bot(expert_selected,history,tools_dropdown,model_dropdown, recursion)
             else:    
-                # Obtiene los parámetros asociados a la herramienta
+                # Get the parameters associated with the tool
                 parameter = tool['parameter']
+                print(f"\033[93mCalling tool {tool_name} with parameter {parameter}...\033[0m")
                 responses += str(TOOLS[tool_name](parameter))
+                print(responses)
     except Exception as e:        
         responses = "No se pueden cargar las herramientas"
+        print(f"\033[91mError: {e}. Unable to load tools.\033[0m")
         print("RESP", e , responses)    
 
-        
-    
+    print(f"\033[96mGenerating final system message...\033[0m")
     final_system_message= f"""You called some tools and they give you responses that you need to answer the user question. Use it to give your final response.
         If the responses have nothing to do with the question then don`t answer the question, help the user to improve the request.
         Responses from the tools:
         {responses}
         """
+    print(f"\033[94mGenerating final response...\033[0m")
     final_response = llm_call(expert_selected,model_dropdown,messages=createMessages(history,final_system_message) , system_message= final_system_message)
     return final_response

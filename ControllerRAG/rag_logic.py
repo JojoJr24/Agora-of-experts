@@ -29,7 +29,6 @@ def cargarTexto(files:str, collectionName:str):
     chunks = text_splitter.split_text(texto)
     collection = client.create_collection(name=collectionName)
     for index, data in enumerate(chunks):
-        print(getModelName(getEmbeddingModel()))
         response = ollama.embeddings(model=getModelName(getEmbeddingModel()), prompt=data)
         embedding = response["embedding"]
         collection.add(

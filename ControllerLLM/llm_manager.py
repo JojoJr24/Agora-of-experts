@@ -38,7 +38,6 @@ def model_config_to_json(config: CoreConfig):
             "top_p": config['top_p']
         }
     }
-    print(json_output)
         # Omitir claves nulas en las opciones
     json_output['options'] = {k: v for k, v in json_output['options'].items() if v is not None}
     
@@ -69,7 +68,6 @@ def get_model_list():
         combined_model_list = sorted(ollama_models + openai_models + groq_models_list)
         return combined_model_list
     except Exception as e:
-        print(e)
         gr.Error(f"Error executing command: {e}")
         return []
 #Init
@@ -128,7 +126,6 @@ def llm_direct_call(request_params, messages: Union[str, List[Dict]], system_mes
 
     try:
         if modelOAI :
-            print("A")
             response = clientOAI.chat.completions.create(
                         model=modelOAI,
                         messages=request_params["messages"],
@@ -141,7 +138,6 @@ def llm_direct_call(request_params, messages: Union[str, List[Dict]], system_mes
                         )
             return response if stream else response.choices[0].message.content
         elif modelGROQ :
-            print("B")
             response = clientGroq.chat.completions.create(
                         model=modelGROQ,
                         messages=request_params["messages"],
@@ -154,13 +150,10 @@ def llm_direct_call(request_params, messages: Union[str, List[Dict]], system_mes
                         )
             return response if stream else response.choices[0].message.content
         else:
-            print(request_params)
             response = client.chat(**model_config_to_json(request_params))
-            print(response)
             return response if stream else response['message']['content']
         
     except Exception as e:
-        print(e)
         gr.Error(f"Error during model interaction: {e}")
         return ""
 
