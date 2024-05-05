@@ -44,7 +44,6 @@ def send_to_bot(history,
         update_history(history,response)
         yield history, "-1WPS"
         return
-
  
     # Llamar a un experto si ninguna de las otras condiciones se cumple
     yield from call_expert(expert_selected, history, model_dropdown, stream_checkbox)
@@ -57,7 +56,7 @@ def call_expert(expert_selected, history, model_dropdown, stream=False):
     files = []
     if len(history) > 1 and is_path( history[-2][0][0]):
         files = [history[-2][0][0]]
-        
+    
     messages = createMessages(history)
     
     if stream:

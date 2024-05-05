@@ -33,6 +33,11 @@ def read_json_file(file_path):
         with open(file_path, 'r') as file:
             data = json.load(file)
             return data
+    except FileNotFoundError:
+        # Si no existe el archivo, se crea con un diccionario vacío
+        with open(file_path, 'w') as file:
+            json.dump({}, file, indent=4)
+            return {}
     except Exception as e:
         return {"error": str(e)}
     
@@ -44,9 +49,36 @@ def write_json_file(data, file_path):
     except Exception as e:
         return {"error": str(e)}
     
-    
 def is_path(s):
     # A basic approach to check if a string could be a path is to look for directory separators
     # common in file paths (like "/" in UNIX-like systems and "\" in Windows).
     # This is a simple heuristic and might not cover all edge cases.
     return os.path.sep in s or (os.path.altsep is not None and os.path.altsep in s)
+
+
+def esOAI(modelo):
+    if "OAI-" in modelo:
+        return modelo.replace("OAI-", "")
+    else:
+        return None
+    
+def esGROQ(modelo):
+    if "GROQ-" in modelo:
+        return modelo.replace("GROQ-", "")
+    else:
+        return None
+    
+def esOLLAMA(modelo):
+    if "OLLAMA-" in modelo:
+        return modelo.replace("OLLAMA-", "")
+    else:
+        return None
+
+    
+
+
+def getModelName(modelo):
+    #oai = esOAI(modelo)
+    #groq = esGROQ(modelo)  
+    ollama = esOLLAMA(modelo) 
+    if ollama : return ollama 

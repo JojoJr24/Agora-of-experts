@@ -1,0 +1,4 @@
+{
+    "embedding_model": "OLLAMA-nomic-embed-text:latest",
+    "vision_model": "OLLAMA-llava:13b-v1.6-vicuna-q4_K_M"
+}

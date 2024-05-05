@@ -3,7 +3,9 @@ import ollama
 import chromadb
 import gradio as gr
 from ControllerLLM.llm_manager import ModelSize, llm_call
+from ControllerSettings.settings_logic import getEmbeddingModel
 from modulesFolders import CHROMA_DIR
+from utils import getModelName
 
 client = chromadb.PersistentClient(path=CHROMA_DIR)
 
@@ -27,7 +29,8 @@ def cargarTexto(files:str, collectionName:str):
     chunks = text_splitter.split_text(texto)
     collection = client.create_collection(name=collectionName)
     for index, data in enumerate(chunks):
-        response = ollama.embeddings(model="nomic-embed-text:latest", prompt=data)
+        print(getModelName(getEmbeddingModel()))
+        response = ollama.embeddings(model=getModelName(getEmbeddingModel()), prompt=data)
         embedding = response["embedding"]
         collection.add(
             ids=[str(index)],
@@ -43,7 +46,7 @@ def getRespuestas(prompt:str, collectionName:str):
     collection = client.get_collection(name=collectionName)
     response = ollama.embeddings(
     prompt=prompt,
-    model="nomic-embed-text:latest"
+    model=getModelName(getEmbeddingModel())
     )
     results = collection.query(
         query_embeddings=[response["embedding"]],

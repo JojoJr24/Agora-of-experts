@@ -8,10 +8,12 @@ import ollama
 from openai import OpenAI
 from pydantic_core import CoreConfig
 
-from CONFIG import VISION_MODEL
 from ControllerExperts.experts_logic import getLlmData
+from ControllerSettings.settings_logic import getVisionModel
 from modulesFolders import CHATS_DIR
 from enum import Enum
+
+from utils import esGROQ, esOAI, esOLLAMA, getModelName
 
 
 class ModelSize(Enum):
@@ -23,6 +25,7 @@ class ModelSize(Enum):
 MODEL_SIZE_ITEMS = [model.value for model in ModelSize]
 
 def model_config_to_json(config: CoreConfig):
+    
     json_output = {
         "messages": config['messages'],
         "model": esOLLAMA(config['model']),
@@ -35,6 +38,7 @@ def model_config_to_json(config: CoreConfig):
             "top_p": config['top_p']
         }
     }
+    print(json_output)
         # Omitir claves nulas en las opciones
     json_output['options'] = {k: v for k, v in json_output['options'].items() if v is not None}
     
@@ -47,9 +51,9 @@ if not os.path.exists(CHATS_DIR):
 
 client = ollama.Client()
 # List local models using ollama
-result = subprocess.run(["ollama", "list"], capture_output=True, text=True)
-local_output = result.stdout.strip().split("\n")[1:]  # Skip the first line (header)
-ollama_models = ["OLLAMA-" +line.split()[0] for line in local_output]  # Extract model names
+local_output = ollama.list()['models']
+ollama_models = ["OLLAMA-" + model['name'] for model in local_output]
+
 # Set up OpenAI API key (ensure this is set in your environment or set directly here)
 clientOAI = OpenAI()
 # Get model list from OpenAI
@@ -80,6 +84,7 @@ def llm_call(expert_selected, model_choice: ModelSize, messages: Union[str, List
     request_params = asdict(model_config)
         # Determine the system message to use based on override flag
     final_system_message = system_message if override_system_message else LLM_DATA.system_message + system_message
+    
     return llm_direct_call(request_params,messages,final_system_message,stream,files)
 
 
@@ -101,11 +106,18 @@ def llm_direct_call(request_params, messages: Union[str, List[Dict]], system_mes
     else:
         raise TypeError("The 'messages' argument must be either a string or a list of message dictionaries.")
     
+    modelOAI = None
+    modelGROQ = None
     # Handle vision models if files are provided
     if len(files) > 0:
-        request_params["model"] = VISION_MODEL
+        request_params["model"] = getVisionModel()
         message_list[-1]["images"] = files
-    
+    else:
+            # Make the API call using the prepared configuration
+        modelOAI = esOAI(request_params["model"])
+        modelGROQ = esGROQ(request_params["model"])    
+        
+
     # Add the prepared message list to the request parameters
     request_params['messages'] = message_list
     # Set the 'stream' parameter in the request if streaming is required
@@ -113,11 +125,10 @@ def llm_direct_call(request_params, messages: Union[str, List[Dict]], system_mes
         request_params['stream'] = True
     
     response = "Error"
-    # Make the API call using the prepared configuration
-    modelOAI = esOAI(request_params["model"])
-    modelGROQ = esGROQ(request_params["model"])
+
     try:
         if modelOAI :
+            print("A")
             response = clientOAI.chat.completions.create(
                         model=modelOAI,
                         messages=request_params["messages"],
@@ -130,6 +141,7 @@ def llm_direct_call(request_params, messages: Union[str, List[Dict]], system_mes
                         )
             return response if stream else response.choices[0].message.content
         elif modelGROQ :
+            print("B")
             response = clientGroq.chat.completions.create(
                         model=modelGROQ,
                         messages=request_params["messages"],
@@ -142,33 +154,16 @@ def llm_direct_call(request_params, messages: Union[str, List[Dict]], system_mes
                         )
             return response if stream else response.choices[0].message.content
         else:
+            print(request_params)
             response = client.chat(**model_config_to_json(request_params))
+            print(response)
             return response if stream else response['message']['content']
         
     except Exception as e:
+        print(e)
         gr.Error(f"Error during model interaction: {e}")
         return ""
 
 
-
-def esOAI(modelo):
-    if "OAI-" in modelo:
-        return modelo.replace("OAI-", "")
-    else:
-        return None
-    
-def esGROQ(modelo):
-    if "GROQ-" in modelo:
-        return modelo.replace("GROQ-", "")
-    else:
-        return None
-    
-def esOLLAMA(modelo):
-    if "OLLAMA-" in modelo:
-        return modelo.replace("OLLAMA-", "")
-    else:
-        return None
-
-    
 
 
