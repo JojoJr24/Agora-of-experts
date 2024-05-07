@@ -62,6 +62,12 @@ After starting the application, a web interface will be available. You can inter
 - **Tools:** If you need mor power, look for a tool
 
 
-## Additional Notes
-AoE installs the model Phi 3.8B 4 bits. It work increadibly well for a tiny model and runs fine in every PC. Try other model form ollama if you want something bigger
+## GROQ and OpenAI Models
+To use Groq or oai model you must set the keys as environmental variables
+export OPENAI_API_KEY="sk-"
+export GROQ_API_KEY="gsk_"
+
+## Tavily search
+If you don`t like duckduckgo search (the search web default tool) you can use Tavily adding the key to environmental variables
+export TAVILY_API_KEY="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"
 
