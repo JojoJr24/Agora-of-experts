@@ -66,14 +66,14 @@ After starting the application, a web interface will be available. You can inter
 
 To use Groq or oai model you must set the keys as environmental variables
 ```
-export OPENAI_API_KEY="sk-"
+export OPENAI_API_KEY="sk-..."
 
-export GROQ_API_KEY="gsk_"
+export GROQ_API_KEY="gsk_..."
 ```
 
 ## Tavily search
 If you don`t like duckduckgo search (the search web default tool) you can use Tavily adding the key to environmental variables
 
 ```
-export TAVILY_API_KEY="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"
+export TAVILY_API_KEY="tvly-..."
 ```
