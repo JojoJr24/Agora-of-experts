@@ -30,7 +30,7 @@ Ollama https://ollama.com/
 #### Linux
 You are fine, everything will be installed by the script
 
-### Install and/or Run the 
+### Install and/or Run the Application
 
 ### All platforms
 
