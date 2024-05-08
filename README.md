@@ -30,7 +30,18 @@ Ollama https://ollama.com/
 #### Linux
 You are fine, everything will be installed by the script
 
-### Install and/or Run the Application
+### Install and/or Run the 
+
+### All platforms
+
+```
+python init.py
+```
+
+The script above will run the respective file, according to your OS.
+
+Alternatively, you can run it manually:
+
 #### Windows
 ```
 Agora_Windows.bat
@@ -40,7 +51,7 @@ Agora_Windows.bat
 chmod Agora_linux.sh ugo +x
 Agora_linux.sh
 ```
-#### Windows
+#### MacOs
 ```
 chmod Agora_MacOs.sh ugo +x
 Agora_MacOs.sh
