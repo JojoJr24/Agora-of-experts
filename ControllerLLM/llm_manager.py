@@ -48,10 +48,15 @@ def model_config_to_json(config: CoreConfig):
 if not os.path.exists(CHATS_DIR):
     os.makedirs(CHATS_DIR)
 
+# Ollama client
 client = ollama.Client()
 # List local models using ollama
-local_output = ollama.list()['models']
-ollama_models = ["OLLAMA-" + model['name'] for model in local_output]
+ollama_models = []
+try:
+    ollama_model_list = ollama.list['models']
+    ollama_models = ["OLLAMA-" + model['name'] for model in ollama_model_list]
+except Exception as e:
+    print("\033[91mError: Ollama is not installed or the service is not running. To use local models, install from (https://ollama.com/) or run 'ollama serve'.\033[0m")
 
 # Set up OpenAI API key (ensure this is set in your environment or set directly here)
 clientOAI = OpenAI()
