@@ -53,7 +53,7 @@ client = ollama.Client()
 # List local models using ollama
 ollama_models = []
 try:
-    ollama_model_list = ollama.list['models']
+    ollama_model_list = ollama.list()['models']
     ollama_models = ["OLLAMA-" + model['name'] for model in ollama_model_list]
 except Exception as e:
     print("\033[91mError: Ollama is not installed or the service is not running. To use local models, install from (https://ollama.com/) or run 'ollama serve'.\033[0m")
