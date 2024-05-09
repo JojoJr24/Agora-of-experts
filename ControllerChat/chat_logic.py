@@ -1,9 +1,9 @@
 import json
 import os
 from ControllerChains.modulos_logic import MODULOS
-from ControllerExperts.experts_logic import  getLlmData
-from ControllerLLM.llm_manager import CHATS_DIR, ModelSize, esGROQ, esOAI, llm_call  
+from ControllerLLM.llm_manager import CHATS_DIR, esGROQ, esOAI, llm_call  
 from ControllerRAG.rag_logic import generateResponse
+from ControllerSettings.settings_logic import getChatTitleModel
 from ControllerTools.tools_logic import tool_bot
 from utils import createMessages, is_path
 import gradio as gr
@@ -51,7 +51,6 @@ def send_to_bot(history,
 
 
 def call_expert(expert_selected, history, model_dropdown, stream=False):
-    modelName = getattr(getLlmData(expert_selected), model_dropdown).model
     start_time = time.perf_counter_ns()
     files = []
     if len(history) > 1 and is_path( history[-2][0][0]):
@@ -61,7 +60,7 @@ def call_expert(expert_selected, history, model_dropdown, stream=False):
     
     if stream:
         responses = llm_call(expert_selected=expert_selected, 
-                             model_choice=model_dropdown, 
+                             model_name=model_dropdown, 
                              messages=messages, 
                              files=files, 
                              stream=True)
@@ -69,7 +68,7 @@ def call_expert(expert_selected, history, model_dropdown, stream=False):
         if responses:
             for chunk in responses:
                 token_counter += 1
-                if esOAI(modelName) or esGROQ(modelName) :
+                if esOAI(model_dropdown) or esGROQ(model_dropdown) :
                     text = chunk.choices[0].delta.content
                     if text :
                         update_history(history,  text)
@@ -85,7 +84,7 @@ def call_expert(expert_selected, history, model_dropdown, stream=False):
             gr.Error("Call failed")    
     else:
         response = llm_call(expert_selected=expert_selected,
-                            model_choice=model_dropdown,
+                            model_name=model_dropdown,
                             messages=messages,
                             files=files)
         update_history(history, response)
@@ -101,23 +100,20 @@ def update_history(history, content):
             history[-1][1] = ""  # Initialize the second element with an empty string if it's None
     history[-1][1] += content    
 
-def add_message(history, message, expert_selected, model):
-    modelName = getattr(getLlmData(expert_selected), model).model
+def add_message(history, message, model):
     for file in  message["files"] :
         history.append(((file,), None))
     
     if message["text"] is not None:
         history.append((message["text"], None))
-        
-    return history,  gr.MultimodalTextbox(interactive=True, file_types=["image"], placeholder="Enter message or upload file...", show_label=False),modelName
+    return history,  gr.MultimodalTextbox(interactive=True, file_types=["image"], placeholder="Enter message or upload file...", show_label=False),model
 
 
-def resendLast(history, expert_selected, model):
-    modelName = getattr(getLlmData(expert_selected), model).model
+def resendLast(history, model):
     if history:
         history[-1][1] = None
         
-    return history,  gr.MultimodalTextbox(interactive=True, file_types=["image"], placeholder="Enter message or upload file...", show_label=False),modelName
+    return history,  gr.MultimodalTextbox(interactive=True, file_types=["image"], placeholder="Enter message or upload file...", show_label=False),model
 
 
     
@@ -144,7 +140,7 @@ def save_conversation(expert_selected,history,conversation_dropdown ):
     if not conversation_name:
         conversation_name = llm_call(
             expert_selected=expert_selected,
-            model_choice=ModelSize.SMALL_MODEL.value, 
+            model_name=getChatTitleModel(), 
             system_message= "You are a label machine.You read a text and write a concise label that describe the text. The label must be shorter than than 6 words",
             messages= history_dump,
             override_system_message=True

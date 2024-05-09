@@ -2,10 +2,11 @@
 import gradio as gr
 # Crea el componente Chatbot
 from ControllerChat.chat_logic import add_message, delete_conversation, editLast, get_conversation_list, load_conversation, print_like_dislike, removeLast, resendLast, save_conversation, send_to_bot
-from ControllerLLM.llm_manager import MODEL_SIZE_ITEMS
+from ControllerLLM.llm_manager import  get_model_list
 from ControllerChains.modulos_logic import  NOMBRES_MODULOS
 from ControllerRAG.rag_logic import update_collections_list
 from ControllerExperts.experts_logic import  DEFAULT_EXPERT, getAllExperts, loadLLMData
+from ControllerSettings.settings_logic import getDefaultModel
 from ControllerTools.tools_logic import NOMBRES_TOOLS
 
 
@@ -47,7 +48,7 @@ def chat_tab():
                 with gr.Row():
                     with gr.Column():
                         with gr.Row():
-                            model_dropdown = gr.Dropdown(value=MODEL_SIZE_ITEMS[0], choices=MODEL_SIZE_ITEMS, label="Model")
+                            model_dropdown = gr.Dropdown(value=getDefaultModel(), choices=get_model_list(), label="Model")
                             stream_checkbox = gr.Checkbox(value=True,label="Stream")
                             model_name = gr.Textbox(value="", label="Last model called", interactive=False , max_lines= 1 , )
                             tps_text = gr.Textbox(value="", label="Inference speed", interactive=False , max_lines= 1)
@@ -74,7 +75,7 @@ def chat_tab():
                             with gr.Row():
                                 clear = gr.ClearButton([chat_input, chatbot,conversation_dropdown],scale=1, variant='primary')
                                 resend_last_button = gr.Button("Re-send",scale=1, min_width=1)
-                                resend_click = resend_last_button.click(resendLast,[chatbot,experts_dropdown, model_dropdown],[chatbot, chat_input, model_name])
+                                resend_click = resend_last_button.click(resendLast,[chatbot, model_dropdown],[chatbot, chat_input, model_name])
                                 resend_click_then = resend_click.then(send_to_bot, [chatbot, 
                                                                       experts_dropdown,
                                                                       tps_text,
@@ -94,7 +95,7 @@ def chat_tab():
                                 edit_button.click(editLast, chatbot , [chatbot, chat_input])
 
                 # Procesa los mensajes de usuario y actualiza el chatbot
-                chat_msg = chat_input.submit(add_message, [chatbot, chat_input ,experts_dropdown, model_dropdown], [chatbot, chat_input, model_name])
+                chat_msg = chat_input.submit(add_message, [chatbot, chat_input , model_dropdown], [chatbot, chat_input, model_name])
                 # Inicia la respuesta del bot tras recibir un mensaje
                 bot_msg = chat_msg.then(send_to_bot, [chatbot, 
                                                     experts_dropdown,

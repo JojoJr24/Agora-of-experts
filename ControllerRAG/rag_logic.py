@@ -2,7 +2,7 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 import ollama
 import chromadb
 import gradio as gr
-from ControllerLLM.llm_manager import ModelSize, llm_call
+from ControllerLLM.llm_manager import llm_call
 from ControllerSettings.settings_logic import getEmbeddingModel
 from modulesFolders import CHROMA_DIR
 from utils import getModelName
@@ -53,7 +53,7 @@ def getRespuestas(prompt:str, collectionName:str):
         )
     return results['documents'][0][0]
 
-def generateResponse(expert_selected,prompt:str, model:ModelSize, collection:str):
+def generateResponse(expert_selected,prompt:str, model:str, collection:str):
     data = getRespuestas(prompt=prompt, collectionName=collection)
     response = llm_call(expert_selected,model,
         f"Using this data: {data}. Respond to this prompt: {prompt}"

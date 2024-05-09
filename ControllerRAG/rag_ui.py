@@ -1,9 +1,7 @@
 import gradio as gr
 
 from ControllerChat.chat_ui import getCollectionsDropDown
-from ControllerLLM.llm_manager import ModelSize
 from ControllerRAG.rag_logic import cargarTexto, delete_collection, generateResponse, update_collections_list
-from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 
 def rag_tab():
