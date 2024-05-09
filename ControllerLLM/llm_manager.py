@@ -16,14 +16,6 @@ from enum import Enum
 from utils import esGROQ, esOAI, esOLLAMA, getModelName
 
 
-class ModelSize(Enum):
-    SMALL_MODEL = "small_model"
-    MEDIUM_MODEL = "medium_model"
-    BIG_MODEL = "big_model"
-
-
-MODEL_SIZE_ITEMS = [model.value for model in ModelSize]
-
 def model_config_to_json(config: CoreConfig):
     
     json_output = {
@@ -78,16 +70,14 @@ def get_model_list():
 #Init
 get_model_list()
 
-def llm_call(expert_selected, model_choice: ModelSize, messages: Union[str, List[Dict]], system_message: str = '', stream: bool = False, files: List[str] = [], override_system_message: bool = False):
+def llm_call(expert_selected, model_name: str, messages: Union[str, List[Dict]], system_message: str = '', stream: bool = False, files: List[str] = [], override_system_message: bool = False):
     # Fetch the LLM data based on expert selection
     LLM_DATA = getLlmData(expert_selected)
-    # Fetch the model configuration based on the selected size
-    model_config = getattr(LLM_DATA, model_choice)
     # Convert the ModelConfig instance to a dictionary
-    request_params = asdict(model_config)
-        # Determine the system message to use based on override flag
+    request_params = asdict(LLM_DATA)['expert']
+    request_params['model'] = model_name
+    # Determine the system message to use based on override flag
     final_system_message = system_message if override_system_message else LLM_DATA.system_message + system_message
-    
     return llm_direct_call(request_params,messages,final_system_message,stream,files)
 
 
@@ -109,6 +99,7 @@ def llm_direct_call(request_params, messages: Union[str, List[Dict]], system_mes
     else:
         raise TypeError("The 'messages' argument must be either a string or a list of message dictionaries.")
     
+    print(message_list)
     modelOAI = None
     modelGROQ = None
     # Handle vision models if files are provided

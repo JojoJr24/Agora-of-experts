@@ -1,4 +1,6 @@
 {
-    "embedding_model": "OLLAMA-nomic-embed-text:latest",
-    "vision_model": "OLLAMA-llava:13b-v1.6-vicuna-q4_K_M"
+    "embedding_model": "OLLAMA-mxbai-embed-large:latest",
+    "vision_model": "OLLAMA-llava:13b-v1.6-vicuna-q4_K_M",
+    "default_model": "OLLAMA-phi3:latest",
+    "chat_title_model": "OLLAMA-phi3:latest"
 }
