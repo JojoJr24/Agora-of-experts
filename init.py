@@ -30,7 +30,7 @@ def run_init_file(filename: str):
     cmd = filename
     
     if(os_name != 'Windows'):
-        cmd = f'chmod {filename} ugo +x'
+        cmd = f'chmod ugo+x {filename} ; ./{cmd}'
 
     os.system(cmd)
 
