@@ -84,17 +84,23 @@ def llm_call(expert_selected, model_name: str, messages: Union[str, List[Dict]],
 def llm_direct_call(request_params, messages: Union[str, List[Dict]], system_message: str = '', stream: bool = False, files: List[str] = []):
     # Prepare the 'messages' parameter based on the type of 'messages' input
     if isinstance(messages, str):
-        # If 'messages' is a string, it is treated as a user's prompt with an optional system message prepended
-        message_list = [
-            {"role": "system", "content": system_message},
-            {"role": "user", "content": messages}
-        ]
+        # If 'messages' is a string, it is treated as a user's prompt
+        if len(files) > 0:
+            message_list = [{"role": "user", "content": messages}]
+        else:
+            message_list = [
+                {"role": "system", "content": system_message},
+                {"role": "user", "content": messages}
+            ]
     elif isinstance(messages, list):
         # If 'messages' is already a list, use it directly
-        message_list = [
-            {"role": "system", "content": system_message},
-            *messages
-        ]
+        if len(files) > 0:
+            message_list = messages
+        else:
+            message_list = [
+                {"role": "system", "content": system_message},
+                *messages
+            ]
 
     else:
         raise TypeError("The 'messages' argument must be either a string or a list of message dictionaries.")
