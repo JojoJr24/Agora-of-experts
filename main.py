@@ -1,5 +1,6 @@
 from pathlib import Path
 import gradio as gr
+import webview
 
 # Crea el componente Chatbot
 from ControllerChat.chat_ui import chat_tab
@@ -38,4 +39,11 @@ with gr.Blocks(css=css, analytics_enabled=False, fill_height=True, theme=aoeThem
       with gr.Tab("Settings", elem_classes="extension-tab"):
          settings_tab()
 
-demo.launch(inbrowser=True , inline=True)
+_, url, _ = demo.launch(inline=True, inbrowser=False, prevent_thread_lock=True, quiet=True)
+print(url)
+
+def set_zoom(window):
+    window.evaluate_js(f"document.body.style.zoom='{80}%'")
+
+window = webview.create_window("AoE", url)
+webview.start(set_zoom, window)

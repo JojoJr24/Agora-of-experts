@@ -8,3 +8,6 @@ langchain-text-splitters
 wikipedia
 duckduckgo-search
 tavily-python
+pywebview[qt]
+PyGObject
+pyinstaller
