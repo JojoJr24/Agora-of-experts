@@ -34,21 +34,22 @@ def tool_bot(expert_selected, history, tools_dropdown, model_dropdown, recursion
     tools_info = "\n".join([f'tool:"{tool}", description:"{TOOLS[tool+"_call"]()}"' for tool in tools_dropdown])
     recursion_system_message= "Another AI needs your help. She received a task that she was unable to complete. He passed you the original assignment and the information he was able to get. Analyze the information to see what is missing, and what is missing to be able to finish the task.\n"
     
-    system_message= f"""You have some tools.First you must write step by step what data you will need to answer the question in the best way posible using the tools. After that you must generate a JSON object with the list of tools, each one with two keys, tool and parameter(even if there is only one tool, it must be a list of one object).
-        This JSON structure is essential for requesting operations from your toolset. Please ensure that each tool interaction follows this format, adapting the parameter content as required by the specific tool's documentation.
+    system_message= f"""You have some tools. First, you must write step by step what data you will need to answer the question in the best way possible using the tools. After that, you must generate a JSON object with the list of tools, each one with three keys: tool, parameter, and outputName (even if there is only one tool, it must be a list of one object).
+        This JSON structure is essential for requesting operations from your toolset. Please ensure that each tool interaction follows this format, adapting the parameter content as required by the specific tool's documentation. If an output from one tool is needed as a parameter for another tool, you must specify the name of the output in the parameter of the subsequent tool, using the format /* + name(example: "/*age") in the outputName and in parameter.
         Structure:
         {{
             "tools": [ 
                 {{
                     "tool": "",
-                    "parameter": ""
+                    "parameter": "",
+                    "outputName": ""
                 }}
             ]
         }}
-        Available  Tools :
-        tool:"helper", description:If you need to send to a tool the result of a previous tool call this helper"
+        Available Tools:
         {tools_info}
         """
+
     if "I know this:" in history[-1][0] : system_message = recursion_system_message + system_message
     print(f"\033[94mGenerating plan using zero-shot-for-agents function...\033[0m")
     # Generate the plan using the zero_shot_for_agents function
@@ -67,22 +68,40 @@ def tool_bot(expert_selected, history, tools_dropdown, model_dropdown, recursion
         tools = []
         # Assuming data is the dictionary containing the JSON information
         tools = data['tools'] 
+        # Array to store tools and parameters
+        tool_calls = []
         # Iterate over the list of tools and their parameters
         for tool in tools:
             # Get the tool name
             tool_name = tool['tool']
-            if tool_name == "helper":
-                if recursion  < 3 :               
-                    history[-1][0] += f"\n I know this: \n {responses}"
-                    recursion += 1
-                    print(f"\033[91mRecursion detected! Recursing into tool_bot...\033[0m")
-                    tool_bot(expert_selected,history,tools_dropdown,model_dropdown, recursion)
-            else:    
-                # Get the parameters associated with the tool
-                parameter = tool['parameter']
+            # Get the parameters associated with the tool
+            parameter = tool['parameter']
+            outputName = tool['outputName']
+            tool_calls.append((tool_name, parameter, outputName))
+        
+        breakCondition = 0
+        # New loop to process tool calls
+        while tool_calls or breakCondition < 4:
+            for tool_call in tool_calls:
+                tool_name, parameter, outputName = tool_call
+                if "/*" in parameter:
+                    continue
                 print(f"\033[93mCalling tool {tool_name} with parameter {parameter}...\033[0m")
-                responses += str(TOOLS[tool_name](parameter))
+                response = str(TOOLS[tool_name](parameter))
+                responses += response
                 print(responses)
+                tool_calls.remove(tool_call)
+                            # Update parameters in remaining tool calls
+                for i in range(len(tool_calls)):
+                    tool_calls[i] = (
+                        tool_calls[i][0], 
+                        tool_calls[i][1].replace("/*${outputName}*/", response), 
+                        tool_calls[i][2]
+                    )
+        
+        print(f"\033[92mAll tool calls processed.\033[0m")
+    
+    
     except Exception as e:        
         responses = "No se pueden cargar las herramientas"
         print(f"\033[91mError: {e}. Unable to load tools.\033[0m")

@@ -39,11 +39,13 @@ with gr.Blocks(css=css, analytics_enabled=False, fill_height=True, theme=aoeThem
       with gr.Tab("Settings", elem_classes="extension-tab"):
          settings_tab()
 
-_, url, _ = demo.launch(inline=True, inbrowser=False, prevent_thread_lock=True, quiet=True)
-print(url)
+demo.launch(inbrowser=True)
 
-def set_zoom(window):
-    window.evaluate_js(f"document.body.style.zoom='{80}%'")
+#_, url, _ = demo.launch(inline=True, inbrowser=False, prevent_thread_lock=True, quiet=True)
+#print(url)
 
-window = webview.create_window("AoE", url)
-webview.start(set_zoom, window)
+#def set_zoom(window):
+#    window.evaluate_js(f"document.body.style.zoom='{80}%'")
+
+#window = webview.create_window("AoE", url)
+#webview.start(set_zoom, window)
